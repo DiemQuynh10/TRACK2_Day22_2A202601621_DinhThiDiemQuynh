@@ -17,7 +17,10 @@ langsmith>=0.2.0
 faiss-cpu>=1.7.0
 
 # ── RAG Evaluation ────────────────────────────────────────────────
-ragas>=0.4.0
+# Ghim đúng 0.3.9: ragas>=0.4.0 import cứng `langchain_community.chat_models.vertexai`,
+# module đã bị gỡ khỏi langchain-community mới → ModuleNotFoundError khi import ragas
+# (xem https://github.com/vibrantlabsai/ragas/issues/2745).
+ragas==0.3.9
 datasets>=2.0.0                  # required by RAGAS internally
 numpy>=1.25.0
 

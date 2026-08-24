@@ -5,18 +5,33 @@ Tải cấu hình từ file .env và thiết lập biến môi trường LangSmi
     config.py tự động set LANGCHAIN_* vào os.environ khi được import.
 """
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
+
+# Windows console mặc định dùng cp1252, không in được emoji (✅, 📚, ...) trong output của lab.
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 # Tải .env từ thư mục gốc của project (Lab/)
 _root = Path(__file__).parent.parent
 load_dotenv(_root / ".env")
 
+
+def _env_first(*names: str, default: str = "") -> str:
+    """Return the first non-empty environment value from a list of aliases."""
+    for name in names:
+        value = os.getenv(name, "").strip()
+        if value:
+            return value
+    return default
+
 # ── LangSmith — PHẢI set trước khi import LangChain ──────────────────────
 os.environ["LANGCHAIN_TRACING_V2"] = os.getenv("LANGCHAIN_TRACING_V2", "true")
-os.environ["LANGCHAIN_API_KEY"]    = os.getenv("LANGCHAIN_API_KEY", "")
-os.environ["LANGCHAIN_PROJECT"]    = os.getenv("LANGCHAIN_PROJECT", "day22-lab")
-os.environ["LANGCHAIN_ENDPOINT"]   = os.getenv("LANGCHAIN_ENDPOINT", "https://api.smith.langchain.com")
+os.environ["LANGCHAIN_API_KEY"]    = _env_first("LANGCHAIN_API_KEY", "LANGSMITH_API_KEY")
+os.environ["LANGCHAIN_PROJECT"]    = _env_first("LANGCHAIN_PROJECT", "LANGSMITH_PROJECT", default="day22-lab")
+os.environ["LANGCHAIN_ENDPOINT"]   = _env_first("LANGCHAIN_ENDPOINT", "LANGSMITH_ENDPOINT", default="https://api.smith.langchain.com")
 
 # ── Provider mặc định ─────────────────────────────────────────────────────
 # Đổi giá trị PROVIDER trong .env: openai | gemini | anthropic | ollama | openrouter
@@ -48,8 +63,8 @@ OPENROUTER_MODEL    = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 # ── LangSmith ─────────────────────────────────────────────────────────────
-LANGSMITH_API_KEY = os.getenv("LANGCHAIN_API_KEY", "")
-LANGSMITH_PROJECT = os.getenv("LANGCHAIN_PROJECT", "day22-lab")
+LANGSMITH_API_KEY = os.environ["LANGCHAIN_API_KEY"]
+LANGSMITH_PROJECT = os.environ["LANGCHAIN_PROJECT"]
 
 
 def validate() -> bool:
@@ -60,7 +75,7 @@ def validate() -> bool:
     missing = []
 
     if not LANGSMITH_API_KEY:
-        missing.append("LANGCHAIN_API_KEY (LangSmith)")
+        missing.append("LANGCHAIN_API_KEY hoặc LANGSMITH_API_KEY (LangSmith)")
 
     if PROVIDER == "openai" and not OPENAI_API_KEY:
         missing.append("OPENAI_API_KEY")
