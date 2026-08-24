@@ -70,7 +70,8 @@ class PIIDetector(Validator):
 
     def validate(self, value: str, metadata: dict):
         """
-        Tìm PII trong value; nếu phát hiện, redact và trả về PassResult với text đã xử lý.
+        Tìm PII trong value; nếu phát hiện, redact và trả về FailResult(fix_value=...)
+        để Guardrails áp dụng bản sửa khi on_fail=FIX.
 
         Bước:
           1. Copy value → redacted_text
@@ -78,8 +79,8 @@ class PIIDetector(Validator):
              - Tìm tất cả matches bằng re.findall(pattern, value)
              - Thay thế từng match bằng "[PII_TYPE_REDACTED]" trong redacted_text
              - Ghi lại (pii_type, match) vào found_pii
-          3. Nếu found_pii không rỗng → PassResult(value_override=redacted_text)
-          4. Nếu không tìm thấy PII → PassResult(value_override=value)
+          3. Nếu found_pii không rỗng → FailResult(fix_value=redacted_text)
+          4. Nếu không tìm thấy PII → PassResult()
         """
         redacted_text = value
         found_pii     = []
